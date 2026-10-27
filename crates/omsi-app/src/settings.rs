@@ -1357,6 +1357,8 @@ mod right_stick_look_tests;
 mod sim_thread_tests;
 #[cfg(test)]
 mod full_tank_tests;
+#[cfg(test)]
+mod realistic_road_tests;
 
 /// The driver's seat per bus (`~/.openomsi/seats.cfg`, a line `bus|x|y|z|pitch` each, the
 /// bus by its `.bus` file relative to the installation, lower case). The seat set in the

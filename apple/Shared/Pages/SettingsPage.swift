@@ -392,6 +392,7 @@ struct SettingsPage: View {
             SettingToggle(label: "Collisions with vehicles", key: "collision_vehicles", fallback: true)
             SettingToggle(label: "Collisions with objects (walls, poles)", key: "collision_objects", fallback: true)
             SettingToggle(label: "Collisions with people", key: "collision_pedestrians", fallback: true)
+            SettingToggle(label: "Realistic road physics", key: "realistic_road_physics", help: "Tyres that slip, grip and roughness by road surface, wind on the bus; trams and trains: pantograph on the wire, body on its springs; off, vehicles drive as in OMSI 2")
             SettingToggle(label: "Start at the real time", key: "use_real_time")
             SettingToggle(label: "Start on today's date", key: "use_real_date")
             SettingToggle(label: "Sync the clock with the real time (locks the time)", key: "time_sync")
