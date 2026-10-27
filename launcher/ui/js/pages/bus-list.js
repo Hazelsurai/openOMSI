@@ -171,7 +171,7 @@ export function BusOptions() {
     ${noServerBus() && html`<${Notice} kind="danger">${t('The server offers none of the vehicles installed here')}</${Notice}>`}
     <${Field} label="Livery">
       <div class="row livery">
-        <div class="grow"><${Select} raw value=${c.paint} options=${paints} onChange=${(paint) => choose({ paint })} /></div>
+        <div class="grow"><${Select} raw searchable value=${c.paint} options=${paints} onChange=${(paint) => choose({ paint })} /></div>
         <${Button} icon="left" title="Preview previous livery" disabled=${paints.length < 2} onClick=${() => step(-1)} />
         <${Button} icon="right" title="Preview next livery" disabled=${paints.length < 2} onClick=${() => step(1)} />
         <span class="muted small num count">${at + 1} / ${paints.length}</span>
@@ -190,7 +190,7 @@ export function BusOptions() {
         <${Field} label="Number plate"><${Input} value=${c.plate} placeholder="Automatic" onInput=${(plate) => choose({ plate })} /></${Field}>
       </div>
       <${Field} label="Depot file">
-        <${Select} raw value=${c.hof_manual ? c.hof : ''} options=${hofs} onChange=${(h) => choose({ hof: h, hof_manual: !!h })} />
+        <${Select} raw searchable value=${c.hof_manual ? c.hof : ''} options=${hofs} onChange=${(h) => choose({ hof: h, hof_manual: !!h })} />
       </${Field}>
       ${v.description && html`<p class="dim selectable bus-about">${v.description}</p>`}
       <div class="muted small selectable ellipsis" title=${v.file}>${v.file}</div>

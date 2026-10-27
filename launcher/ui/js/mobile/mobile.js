@@ -13,6 +13,7 @@ import { BusPreview } from '../preview.js';
 import { RouteMap } from '../routemap.js';
 import { tourId, choose, curMap, curBus, curLine, curTour, pickedTrip, realTime, realDate, start, weatherName, weatherOfItsOwn, askJoined, noServerBus, mapName, serverBuses, busFile, transportRefusal } from '../data.js';
 import { hms, mapPicture, tripAt, depotRun, pickTrip, lineMatches, findTours, chooseLine, chooseTour, setSeason, localNow, SEASONS, PHASES, TripEnds, tripTime, weatherFacts, entryName } from '../pages/drive.js';
+import { filterOptions } from '../list-filter.js';
 import { MultiplayerPage } from '../pages/multiplayer.js';
 import { ProfilePage } from '../pages/profile.js';
 import { ModsPage } from '../pages/mods.js';
@@ -214,8 +215,15 @@ function BusSheet({ close }) {
 function PaintSheet({ close }) {
   const s = useStore();
   const v = curBus();
+  const [q, setQ] = useState('');
   if (!v) return null;
-  return html`<div>${[['', v.default_paint ? `${t('Standard')} (${v.default_paint})` : t('Standard')], ...v.paints.map((p) => [p, p])].map(([p, label]) => pick(s.choice.paint === p, () => (choose({ paint: p }), close()), html`<span class="m-pick-text"><b>${label}</b></span>`))}</div>`;
+  const paints = [['', v.default_paint ? `${t('Standard')} (${v.default_paint})` : t('Standard')], ...v.paints.map((p) => [p, p])];
+  const shown = filterOptions(paints, q);
+  return html`<div>
+    <input class="m-search" value=${q} placeholder=${t('Search')} onInput=${(e) => setQ(e.currentTarget.value)} />
+    ${shown.length === 0 && html`<p class="muted small" style="padding:8px">${t('No match')}</p>`}
+    ${shown.map(([p, label]) => pick(s.choice.paint === p, () => (choose({ paint: p }), close()), html`<span class="m-pick-text"><b>${label}</b></span>`))}
+  </div>`;
 }
 
 function LineSheet({ close }) {

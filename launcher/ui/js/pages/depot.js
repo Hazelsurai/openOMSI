@@ -86,7 +86,7 @@ function Detail({ b, groups = [] }) {
               <${Button} icon="refresh" title="Another plate" onClick=${reroll} />
             </div>
           </${Field}>
-          <${Field} label="Livery"><${Select} raw value=${b.paint} options=${paints} disabled=${!v} onChange=${(paint) => update(b.id, { paint })} /></${Field}>
+          <${Field} label="Livery"><${Select} raw searchable value=${b.paint} options=${paints} disabled=${!v} onChange=${(paint) => update(b.id, { paint })} /></${Field}>
           ${groups.length > 0 && html`<${Field} label="Depot"><${Select} raw value=${b.group || ''} options=${[['', t('No depot')], ...groups.map((g) => [g, g])]} onChange=${(group) => update(b.id, { group })} /></${Field}>`}
           <${Field} label="Fleet number">${numbers.length
             ? html`<${Select} raw value=${b.number} options=${numbers} onChange=${(number) => update(b.id, { number })} />`

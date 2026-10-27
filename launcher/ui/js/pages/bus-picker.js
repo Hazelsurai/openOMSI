@@ -140,7 +140,7 @@ export function BusPicker({ onClose, onTake, title = 'Choose a bus', yes = 'Take
             ${transportRefusal(map, v) && html`<${Notice} kind="warn">${transportRefusal(map, v)} ${t('Choose another map or vehicle.')}</${Notice}>`}
             ${v.missing_packs?.length > 0 && html`<${Notice} kind="warn">${t('Parts of this bus come from packs that are not installed: {packs}', { packs: v.missing_packs.join(', ') })}</${Notice}>`}
             <${Field} label="Paint">
-              <${Select} raw value=${paint} options=${[['', v.default_paint ? `${t('Standard')} (${v.default_paint})` : t('Standard')], ...v.paints.map((p) => [p, p])]} onChange=${setPaint} />
+              <${Select} raw searchable value=${paint} options=${[['', v.default_paint ? `${t('Standard')} (${v.default_paint})` : t('Standard')], ...v.paints.map((p) => [p, p])]} onChange=${setPaint} />
             </${Field}>
             ${v.description && html`<p class="dim selectable" style="white-space:pre-line;max-height:220px;overflow:auto">${v.description}</p>`}
             <${Notes} kind="bus" file=${v.file} />

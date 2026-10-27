@@ -106,7 +106,7 @@ function BusThumb({ compact }) {
       ${depotBusOf() && html`<div class="row small depot-tag"><${Icon} name="garage" size=${16} /><span class="ellipsis">${t('Your bus: {name}', { name: `${depotBusOf().name} (${depotBusOf().plate})` })}</span></div>`}
       ${noServerBus() && html`<${Notice} kind="danger">${t('The server offers none of the vehicles installed here')}</${Notice}>`}
       ${v && html`<div class="row livery">
-        <div class="grow"><${Select} raw value=${c.paint} options=${paints} onChange=${(paint) => choose({ paint })} /></div>
+        <div class="grow"><${Select} raw searchable value=${c.paint} options=${paints} onChange=${(paint) => choose({ paint })} /></div>
         <${Button} icon="left" title="Preview previous livery" disabled=${paints.length < 2} onClick=${() => step(-1)} />
         <${Button} icon="right" title="Preview next livery" disabled=${paints.length < 2} onClick=${() => step(1)} />
       </div>`}

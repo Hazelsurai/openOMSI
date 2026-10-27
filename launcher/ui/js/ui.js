@@ -5,6 +5,7 @@ import { html, useEffect, useRef, useState } from '../vendor/preact-htm.js';
 import { Icon } from './icons.js';
 import { t } from './i18n.js';
 import { onPhone } from './api.js';
+import { filterOptions } from './list-filter.js';
 
 export { html };
 
@@ -26,20 +27,28 @@ export function Field({ label, help, children }) {
   return html`<div class="field">${label && html`<label>${t(label)}</label>`}${children}${help && html`<div class="help">${t(help)}</div>`}</div>`;
 }
 
-/** A select of `options`: [value, label] pairs (labels translated unless `raw`). */
-export function Select({ value, options, onChange, disabled, raw, placeholder }) {
+/** A select of `options`: [value, label] pairs (labels translated unless `raw`).
+ * `searchable` keeps a filter at the top of a long list (repaints, depot files). */
+export function Select({ value, options, onChange, disabled, raw, placeholder, searchable }) {
   const [open, setOpen] = useState(false);
   const [hi, setHi] = useState(-1);
   const [place, setPlace] = useState(null);
+  const [q, setQ] = useState('');
   const box = useRef();
   const list = useRef();
+  const find = useRef();
   const now = String(value ?? '');
   const has = options.some(([v]) => String(v) === now);
   const items = [
     ...(has ? [] : [[now, value === '' || value == null ? t(placeholder || 'Choose…') : now]]),
     ...options.map(([v, l]) => [String(v), raw ? l : t(l)]),
   ];
+  const shown = searchable ? filterOptions(items, q) : items;
   const at = items.findIndex(([v]) => v === now);
+  const shut = () => {
+    setOpen(false);
+    setQ('');
+  };
   useEffect(() => {
     if (!open) return;
     const r = box.current.getBoundingClientRect();
@@ -51,9 +60,8 @@ export function Select({ value, options, onChange, disabled, raw, placeholder })
     const leftward = right < 420 && left > right;
     setPlace({ ...(leftward ? { right: innerWidth - r.right } : { left: r.left }), width: r.width, widest: Math.max(r.width, Math.min(420, leftward ? left : right)), max, ...(up ? { bottom: innerHeight - r.top + 4 } : { top: r.bottom + 4 }) });
     setHi(at);
-    const out = (e) => !box.current?.contains(e.target) && !list.current?.contains(e.target) && setOpen(false);
-    const away = (e) => !list.current?.contains(e.target) && setOpen(false);
-    const shut = () => setOpen(false);
+    const out = (e) => !box.current?.contains(e.target) && !list.current?.contains(e.target) && shut();
+    const away = (e) => !list.current?.contains(e.target) && shut();
     document.addEventListener('mousedown', out);
     document.addEventListener('scroll', away, true);
     addEventListener('resize', shut);
@@ -64,23 +72,33 @@ export function Select({ value, options, onChange, disabled, raw, placeholder })
     };
   }, [open]);
   useEffect(() => {
-    if (open && place) list.current?.children[Math.max(at, 0)]?.scrollIntoView({ block: 'nearest' });
+    if (open && place) {
+      list.current?.querySelectorAll('.dropdown-item')[Math.max(at, 0)]?.scrollIntoView({ block: 'nearest' });
+      if (searchable) find.current?.focus();
+    }
   }, [place]);
   if (onPhone) {
-    return html`<select class="select" value=${now} disabled=${disabled} onChange=${(e) => onChange(e.currentTarget.value)}>
-      ${items.map(([v, l]) => html`<option value=${v}>${l}</option>`)}
+    const phone = searchable && !shown.some(([v]) => v === now) && at >= 0 ? [items[at], ...shown] : shown;
+    const select = html`<select class="select" value=${now} disabled=${disabled} onChange=${(e) => onChange(e.currentTarget.value)}>
+      ${phone.map(([v, l]) => html`<option value=${v}>${l}</option>`)}
     </select>`;
+    if (!searchable) return select;
+    return html`<div class="stack" style="gap:6px">
+      <input class="input" value=${q} placeholder=${t('Search')} onInput=${(e) => setQ(e.currentTarget.value)} spellcheck="false" />
+      ${select}
+    </div>`;
   }
   const pick = (v) => {
-    setOpen(false);
+    shut();
     if (v !== now) onChange(v);
   };
   const move = (n) => {
-    const i = Math.max(0, Math.min(items.length - 1, n));
+    const i = Math.max(0, Math.min(shown.length - 1, n));
     setHi(i);
-    list.current?.children[i]?.scrollIntoView({ block: 'nearest' });
+    list.current?.querySelectorAll('.dropdown-item')[i]?.scrollIntoView({ block: 'nearest' });
   };
   const key = (e) => {
+    const typing = e.target === find.current;
     if (!open) {
       if (['Enter', ' ', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
         e.preventDefault();
@@ -90,26 +108,29 @@ export function Select({ value, options, onChange, disabled, raw, placeholder })
     }
     if (e.key === 'Escape') {
       e.stopPropagation();
-      setOpen(false);
-    } else if (e.key === 'Tab') setOpen(false);
+      shut();
+    } else if (e.key === 'Tab') shut();
     else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
       move(hi + (e.key === 'ArrowDown' ? 1 : -1));
-    } else if (e.key === 'Home' || e.key === 'End') {
+    } else if (!typing && (e.key === 'Home' || e.key === 'End')) {
       e.preventDefault();
-      move(e.key === 'Home' ? 0 : items.length - 1);
-    } else if (e.key === 'Enter' || e.key === ' ') {
+      move(e.key === 'Home' ? 0 : shown.length - 1);
+    } else if (e.key === 'Enter' || (e.key === ' ' && !typing)) {
       e.preventDefault();
-      if (items[hi]) pick(items[hi][0]);
+      if (shown[hi]) pick(shown[hi][0]);
     }
   };
   const label = items[at]?.[1] ?? '';
   return html`<div class="dropdown" ref=${box}>
     <button type="button" class=${'select' + (open ? ' open' : '')} disabled=${disabled} title=${label} aria-haspopup="listbox" aria-expanded=${open}
-      onClick=${() => setOpen(!open)} onKeyDown=${key}><span>${label}</span></button>
+      onClick=${() => (open ? shut() : setOpen(true))} onKeyDown=${key}><span>${label}</span></button>
     ${open && place && html`<div class="dropdown-list" role="listbox" ref=${list}
       style=${(place.left != null ? `left:${place.left}px;` : `right:${place.right}px;`) + `min-width:${place.width}px;width:max-content;max-width:${place.widest}px;max-height:${place.max}px;` + (place.top != null ? `top:${place.top}px` : `bottom:${place.bottom}px`)}>
-      ${items.map(([v, l], i) => html`<div role="option" aria-selected=${v === now} title=${l}
+      ${searchable && html`<div class="dropdown-find"><input ref=${find} class="input" value=${q} placeholder=${t('Search')} spellcheck="false"
+        onInput=${(e) => { setQ(e.currentTarget.value); setHi(0); }} onKeyDown=${key} /></div>`}
+      ${shown.length === 0 && html`<div class="dropdown-empty">${t('No match')}</div>`}
+      ${shown.map(([v, l], i) => html`<div role="option" aria-selected=${v === now} title=${l}
         class=${'dropdown-item' + (v === now ? ' on' : '') + (i === hi ? ' hi' : '')}
         onMouseMove=${() => i !== hi && setHi(i)} onMouseDown=${(e) => { e.preventDefault(); pick(v); }}>${l}</div>`)}
     </div>`}
