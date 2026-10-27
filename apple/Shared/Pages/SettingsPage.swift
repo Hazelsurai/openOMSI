@@ -123,6 +123,7 @@ struct SettingsPage: View {
                 SettingSelect(label: "Shadows cast by", key: "shadow_casters", options: [("all", "Every solid mesh"), ("omsi", "[shadow] meshes, as OMSI")])
                 SettingToggle(label: "Detail texturing up close", key: "detail_textures", fallback: true)
             }
+            SettingSlider(label: "Brightness", key: "brightness", range: 0 ... 1.5, step: 0.05, fallback: 1) { "\(Int(($0 * 100).rounded()))%" }
             if enhanced {
                 SettingSlider(label: "Night brightness", key: "night_brightness", range: 0 ... 3, step: 0.25, fallback: 0) { $0 < 0.01 ? off : String(format: "+%.2f", $0) }
                 SettingSlider(label: "LED glow", key: "led_glow", range: 0 ... 15, step: 1, fallback: 6) { $0 < 0.5 ? off : "\(Int($0))" }

@@ -553,6 +553,16 @@ pub(crate) fn dress_lighting(
     lighting.detail = settings.detail_textures;
     lighting.windy_trees = settings.windy_trees();
     lighting.night_brightness = settings.night_brightness;
+    // the player's brightness, after the weather's own (1 leaves the picture as it is).
+    // Enhanced exposure only follows the sun, as the old weather slider did.
+    let k = settings.brightness.clamp(0.0, 1.5);
+    lighting.sun_intensity *= k;
+    if !lighting.enhanced {
+        lighting.secondary *= k;
+        lighting.ambient *= k;
+        lighting.sky_color *= k;
+        lighting.fog_color *= k;
+    }
     lighting.reflection_strength = settings.reflections;
     lighting.puddles = match settings.puddles.as_str() { "off" => 0, "low" => 1, _ => 2 };
 }
@@ -614,4 +624,40 @@ fn switch_rules(transit: &omsi_transit::TransitData) -> Vec<omsi_sim::ai_traffic
             })
         })
         .collect()
+}
+
+#[cfg(test)]
+mod brightness_tests {
+    use super::dress_lighting;
+    use crate::settings::Settings;
+
+    fn lit(enhanced: bool) -> omsi_render::Lighting {
+        omsi_render::Lighting { enhanced, sun_intensity: 0.8, ambient: glam::Vec3::splat(0.4), ..omsi_render::Lighting::default() }
+    }
+
+    #[test]
+    fn vanilla_brightness_scales_the_whole_picture() {
+        let mut lighting = lit(false);
+        let settings = Settings { brightness: 0.5, ..Settings::default() };
+        dress_lighting(&mut lighting, None, None, &settings);
+        assert!((lighting.sun_intensity - 0.4).abs() < 1e-5);
+        assert!((lighting.ambient.x - 0.2).abs() < 1e-5);
+    }
+
+    #[test]
+    fn enhanced_brightness_scales_only_the_sun() {
+        let mut lighting = lit(true);
+        let settings = Settings { brightness: 0.5, ..Settings::default() };
+        dress_lighting(&mut lighting, None, None, &settings);
+        assert!((lighting.sun_intensity - 0.4).abs() < 1e-5);
+        assert!((lighting.ambient.x - 0.4).abs() < 1e-5);
+    }
+
+    #[test]
+    fn the_default_brightness_leaves_the_picture() {
+        let mut lighting = lit(false);
+        let before = lighting.sun_intensity;
+        dress_lighting(&mut lighting, None, None, &Settings::default());
+        assert!((lighting.sun_intensity - before).abs() < 1e-5);
+    }
 }

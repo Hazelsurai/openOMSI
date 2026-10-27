@@ -77,7 +77,7 @@ pub(super) fn option_now(app: &App, verb: &str, arg: &str) -> Option<f32> {
         }
         "wet" => app.session.wetness,
         "cloud_cover" => crate::weather_setup::cover_of(app.session.weather.as_ref()?),
-        "brightness" => custom_state(app).brightness,
+        "brightness" => app.settings.brightness,
         "humidity" => custom_state(app).humidity,
         "temp" => app.session.weather.as_ref()?.temp.0,
         "wind_speed" => app.session.weather.as_ref()?.wind.1,
@@ -361,7 +361,7 @@ pub(super) fn option_set(app: &mut App, verb: &str, arg: &str, v: f32) -> Option
             None
         }
         "brightness" => {
-            let mut c=custom_state(app); c.brightness=v; app.set_custom_weather(c); None
+            app.settings.brightness = v.clamp(0.0, 1.5); Some(("brightness", app.settings.brightness.to_string()))
         }
         "humidity" => {
             let mut c=custom_state(app); c.humidity=v; app.set_custom_weather(c); None
@@ -927,7 +927,7 @@ fn toggle_set_graphics_and_controls(app: &mut App, id: &str, on: bool, bit: Stri
 /// Change the setting `verb` (a switch or a slider) as `mv` says; false when it is neither.
 pub(crate) fn option_do(app: &mut App, verb: &str, arg: &str, mv: Move) -> bool {
     // (the weather is the METAR report's while the sync is on)
-    if app.metar_locked() && matches!(verb, "visibility" | "rain_amt" | "wet" | "brightness" | "humidity" | "temp" | "wind_speed" | "wind_dir" | "snow_cover" | "snow_road") {
+    if app.metar_locked() && matches!(verb, "visibility" | "rain_amt" | "wet" | "humidity" | "temp" | "wind_speed" | "wind_dir" | "snow_cover" | "snow_road") {
         app.service_msg = Some(("The weather cannot be changed while the METAR sync is on".into(), 3.0));
         return true;
     }
